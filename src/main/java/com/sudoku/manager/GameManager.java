@@ -45,7 +45,7 @@ public class GameManager {
         
         if (value == 0 || currentBoard.isValidMove(row, col, value)) {
             currentBoard.setValue(row, col, value);
-            moveHistory.add(new GameMove(row, col, previousValue, value));
+            moveHistory.add(new GameMove(row, col, previousValue));
             
             if (currentBoard.isComplete()) {
                 gameCompleted = true;
@@ -101,6 +101,7 @@ public class GameManager {
             currentBoard = originalBoard.copy();
             gameCompleted = false;
             moveHistory.clear();
+            hintsUsed = 0;
             startTime = System.currentTimeMillis();
         }
     }
@@ -147,13 +148,12 @@ public class GameManager {
     
     // Inner classes
     private static class GameMove {
-        final int row, col, previousValue, newValue;
+        final int row, col, previousValue;
         
-        GameMove(int row, int col, int previousValue, int newValue) {
+        GameMove(int row, int col, int previousValue) {
             this.row = row;
             this.col = col;
             this.previousValue = previousValue;
-            this.newValue = newValue;
         }
     }
     
