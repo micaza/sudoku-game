@@ -153,6 +153,35 @@ public class SudokuBoard {
         return copy;
     }
     
+    public SudokuBoard(int[][] values, boolean[][] fixed) {
+        board = new Cell[SIZE][SIZE];
+        for (int i = 0; i < SIZE; i++) {
+            for (int j = 0; j < SIZE; j++) {
+                board[i][j] = new Cell(values[i][j], fixed[i][j]);
+            }
+        }
+    }
+    
+    public int[][] getBoardArray() {
+        int[][] array = new int[SIZE][SIZE];
+        for (int i = 0; i < SIZE; i++) {
+            for (int j = 0; j < SIZE; j++) {
+                array[i][j] = board[i][j].getValue();
+            }
+        }
+        return array;
+    }
+    
+    public boolean[][] getFixedCellsArray() {
+        boolean[][] array = new boolean[SIZE][SIZE];
+        for (int i = 0; i < SIZE; i++) {
+            for (int j = 0; j < SIZE; j++) {
+                array[i][j] = board[i][j].isFixed();
+            }
+        }
+        return array;
+    }
+    
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

@@ -4,6 +4,8 @@ import com.sudoku.model.SudokuBoard;
 import com.sudoku.model.Difficulty;
 import com.sudoku.generator.SudokuGenerator;
 import com.sudoku.solver.SudokuSolver;
+import com.sudoku.persistence.GameState;
+import com.sudoku.persistence.GamePersistence;
 import java.util.*;
 
 public class GameManager {
@@ -15,6 +17,7 @@ public class GameManager {
     private boolean gameCompleted;
     private int hintsUsed;
     private List<GameMove> moveHistory;
+    private Difficulty currentDifficulty;
     
     public GameManager() {
         this.generator = new SudokuGenerator();
@@ -26,6 +29,7 @@ public class GameManager {
     public void startNewGame(Difficulty difficulty) {
         currentBoard = generator.generatePuzzle(difficulty);
         originalBoard = currentBoard.copy();
+        currentDifficulty = difficulty;
         startTime = System.currentTimeMillis();
         gameCompleted = false;
         hintsUsed = 0;
@@ -145,6 +149,53 @@ public class GameManager {
     public boolean validateCurrentState() {
         return solver.isValid(currentBoard);
     }
+    
+    public boolean saveGame(String filename, String playerName) {
+        if (currentBoard == null) return false;
+        
+        GamePersistence persistence = new GamePersistence();
+        GameState gameState = new GameState(
+            currentBoard.getBoardArray(),
+            originalBoard.getBoardArray(),
+            currentBoard.getFixedCellsArray(),
+            currentDifficulty,
+            startTime,
+            gameCompleted,
+            hintsUsed,
+            playerName
+        );
+        
+        return persistence.saveGame(gameState, filename);
+    }
+    
+    public boolean loadGame(String filename) {
+        GamePersistence persistence = new GamePersistence();
+        GameState gameState = persistence.loadGame(filename);
+        
+        if (gameState == null) return false;
+        
+        currentBoard = new SudokuBoard(gameState.getCurrentBoard(), gameState.getFixedCells());
+        originalBoard = new SudokuBoard(gameState.getOriginalBoard(), gameState.getFixedCells());
+        currentDifficulty = gameState.getDifficulty();
+        startTime = gameState.getStartTime();
+        gameCompleted = gameState.isGameCompleted();
+        hintsUsed = gameState.getHintsUsed();
+        moveHistory.clear();
+        
+        return true;
+    }
+    
+    public List<String> listSavedGames() {
+        GamePersistence persistence = new GamePersistence();
+        return persistence.listSavedGames();
+    }
+    
+    public boolean deleteGame(String filename) {
+        GamePersistence persistence = new GamePersistence();
+        return persistence.deleteGame(filename);
+    }
+    
+
     
     // Inner classes
     private static class GameMove {

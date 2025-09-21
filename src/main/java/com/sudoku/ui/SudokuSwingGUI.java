@@ -94,6 +94,8 @@ public class SudokuSwingGUI extends JFrame {
         JButton resetBtn = createButton("Reset", this::handleReset);
         JButton hintBtn = createButton("Hint", this::handleHint);
         JButton undoBtn = createButton("Undo", this::handleUndo);
+        JButton saveBtn = createButton("Save", this::handleSave);
+        JButton loadBtn = createButton("Load", this::handleLoad);
         
         controls.add(newGameBtn);
         controls.add(solveBtn);
@@ -101,6 +103,8 @@ public class SudokuSwingGUI extends JFrame {
         controls.add(resetBtn);
         controls.add(hintBtn);
         controls.add(undoBtn);
+        controls.add(saveBtn);
+        controls.add(loadBtn);
         
         // Sudoku grid
         JPanel gridPanel = createSudokuGrid();
@@ -324,6 +328,58 @@ public class SudokuSwingGUI extends JFrame {
             showMessage("Move undone.");
         } else {
             showMessage("No moves to undo.");
+        }
+    }
+    
+    private void handleSave() {
+        if (gameManager.getCurrentBoard() == null) {
+            showMessage("No game to save.");
+            return;
+        }
+        
+        String playerName = JOptionPane.showInputDialog(this, "Enter your name:", "Save Game", JOptionPane.QUESTION_MESSAGE);
+        if (playerName == null) return; // User cancelled
+        if (playerName.trim().isEmpty()) playerName = "Player";
+        
+        String filename = JOptionPane.showInputDialog(this, "Enter filename (or leave empty for auto-generated):", "Save Game", JOptionPane.QUESTION_MESSAGE);
+        if (filename == null) return; // User cancelled
+        
+        if (gameManager.saveGame(filename.trim().isEmpty() ? null : filename, playerName)) {
+            showMessage("Game saved successfully!");
+        } else {
+            showMessage("Failed to save game.");
+            JOptionPane.showMessageDialog(this, "Failed to save game.", "Save Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
+    private void handleLoad() {
+        java.util.List<String> savedGames = gameManager.listSavedGames();
+        
+        if (savedGames.isEmpty()) {
+            showMessage("No saved games found.");
+            JOptionPane.showMessageDialog(this, "No saved games found.", "Load Game", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        
+        String[] gameArray = savedGames.toArray(new String[0]);
+        String selectedGame = (String) JOptionPane.showInputDialog(this,
+            "Select a game to load:",
+            "Load Game",
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            gameArray,
+            gameArray[0]);
+        
+        if (selectedGame != null) {
+            if (gameManager.loadGame(selectedGame)) {
+                updateBoard();
+                updateUI();
+                gameTimer.start();
+                showMessage("Game loaded successfully: " + selectedGame);
+            } else {
+                showMessage("Failed to load game: " + selectedGame);
+                JOptionPane.showMessageDialog(this, "Failed to load game.", "Load Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
     

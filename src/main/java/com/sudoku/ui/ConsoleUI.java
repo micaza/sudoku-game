@@ -171,7 +171,9 @@ public class ConsoleUI {
         System.out.println("5. Solve Puzzle");
         System.out.println("6. Reset to Original");
         System.out.println("7. Validate Current State");
-        System.out.println("8. Back to Main Menu");
+        System.out.println("8. Save Game");
+        System.out.println("9. Load Game");
+        System.out.println("10. Back to Main Menu");
         System.out.print("Choose an option: ");
     }
     
@@ -204,6 +206,14 @@ public class ConsoleUI {
                     handleValidate();
                     break;
                 case 8:
+                    handleSaveGame();
+                    break;
+                case 9:
+                    if (handleLoadGame()) {
+                        return;
+                    }
+                    break;
+                case 10:
                     return;
                 default:
                     System.out.println("Invalid choice. Please try again.");
@@ -309,5 +319,55 @@ public class ConsoleUI {
         } else {
             System.out.println("No game statistics available.");
         }
+    }
+    
+    private void handleSaveGame() {
+        System.out.print("\nEnter your name: ");
+        String playerName = scanner.nextLine().trim();
+        if (playerName.isEmpty()) playerName = "Player";
+        
+        System.out.print("Enter filename (or press Enter for auto-generated): ");
+        String filename = scanner.nextLine().trim();
+        
+        if (gameManager.saveGame(filename.isEmpty() ? null : filename, playerName)) {
+            System.out.println("Game saved successfully!");
+        } else {
+            System.out.println("Failed to save game.");
+        }
+    }
+    
+    private boolean handleLoadGame() {
+        List<String> savedGames = gameManager.listSavedGames();
+        
+        if (savedGames.isEmpty()) {
+            System.out.println("\nNo saved games found.");
+            return false;
+        }
+        
+        System.out.println("\nSaved games:");
+        for (int i = 0; i < savedGames.size(); i++) {
+            System.out.println((i + 1) + ". " + savedGames.get(i));
+        }
+        
+        System.out.print("\nEnter game number to load (or 0 to cancel): ");
+        try {
+            int choice = Integer.parseInt(scanner.nextLine().trim());
+            if (choice == 0) return false;
+            
+            if (choice > 0 && choice <= savedGames.size()) {
+                String filename = savedGames.get(choice - 1);
+                if (gameManager.loadGame(filename)) {
+                    System.out.println("Game loaded successfully!");
+                    return true;
+                } else {
+                    System.out.println("Failed to load game.");
+                }
+            } else {
+                System.out.println("Invalid selection.");
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input.");
+        }
+        return false;
     }
 }

@@ -1,6 +1,6 @@
 # Sudoku Game
 
-A complete Sudoku game implementation in Java with console-based interface and extensible architecture for GUI adaptation.
+A complete Sudoku game implementation in Java with console and Swing GUI interfaces.
 
 ## Features
 
@@ -10,6 +10,8 @@ A complete Sudoku game implementation in Java with console-based interface and e
 - **Game Management**: Move history, undo functionality, hints
 - **Statistics Tracking**: Time, moves, hints used
 - **Input Validation**: Prevents invalid moves and conflicts
+- **Game Persistence**: Save and load games
+- **Dual Interface**: Console and Swing GUI options
 
 ## Architecture
 
@@ -21,32 +23,38 @@ A complete Sudoku game implementation in Java with console-based interface and e
 - **`SudokuSolver`**: Implements backtracking algorithm with optimizations
 - **`SudokuGenerator`**: Creates valid puzzles with unique solutions
 - **`GameManager`**: Handles game state, moves, and statistics
-- **`ConsoleUI`**: Provides interactive console interface
+- **`ConsoleUI`**: Interactive console interface
+- **`SudokuSwingGUI`**: Swing-based graphical interface
 
 ### Design Patterns Used
 
 - **Strategy Pattern**: Different difficulty levels
-- **Observer Pattern**: Ready for GUI event handling
+- **Observer Pattern**: GUI event handling
 - **Command Pattern**: Move history for undo functionality
 - **Factory Pattern**: Puzzle generation
 
 ## Quick Start
 
-### Compilation
+### Console Version
 ```bash
 ./compile.sh
+java -cp out com.sudoku.SudokuApplication
 ```
 
-### Running the Game
+### Swing GUI Version
 ```bash
-java -cp out com.sudoku.SudokuApplication
+./compile-swing.sh
+java -cp out com.sudoku.ui.SudokuSwingGUI
 ```
 
 ### Manual Compilation
 ```bash
 mkdir -p out
 javac -d out -sourcepath src/main/java src/main/java/com/sudoku/*.java src/main/java/com/sudoku/*/*.java
+# Console:
 java -cp out com.sudoku.SudokuApplication
+# Swing GUI:
+java -cp out com.sudoku.ui.SudokuSwingGUI
 ```
 
 ## How to Play
@@ -67,50 +75,22 @@ java -cp out com.sudoku.SudokuApplication
 - `5` - Solve puzzle automatically
 - `6` - Reset to original puzzle
 - `7` - Validate current state
-- `8` - Return to main menu
+- `8` - Save game
+- `9` - Load game
+- `10` - Return to main menu
 
-## Extending to GUI
+## User Interfaces
 
-The architecture is designed for easy GUI adaptation:
+### Console Interface
+Interactive text-based interface with menu-driven navigation and ASCII board display.
 
-### JavaFX Integration
-```java
-public class SudokuFXController {
-    private GameManager gameManager = new GameManager();
-    
-    @FXML
-    private GridPane sudokuGrid;
-    
-    public void initializeBoard() {
-        // Create 9x9 grid of TextField nodes
-        // Bind to gameManager.getCurrentBoard()
-    }
-    
-    public void handleCellClick(int row, int col) {
-        // Handle user input
-        // Call gameManager.makeMove()
-        // Update UI
-    }
-}
-```
-
-### Swing Integration
-```java
-public class SudokuSwingPanel extends JPanel {
-    private GameManager gameManager = new GameManager();
-    private JTextField[][] cells = new JTextField[9][9];
-    
-    public SudokuSwingPanel() {
-        setLayout(new GridLayout(9, 9));
-        initializeCells();
-    }
-    
-    private void initializeCells() {
-        // Create grid of JTextField components
-        // Add DocumentListeners for input validation
-    }
-}
-```
+### Swing GUI
+Full-featured graphical interface with:
+- Visual 9x9 grid with cell highlighting
+- Difficulty selection buttons
+- Game control buttons (New Game, Hint, Undo, Solve, Reset)
+- Real-time statistics display
+- Error highlighting and validation feedback
 
 ## Algorithm Details
 
@@ -148,12 +128,11 @@ Create unit tests for:
 
 ## Future Enhancements
 
-- **GUI Implementation**: JavaFX or Swing interface
-- **Persistence**: Save/load games
 - **Multiplayer**: Network-based competition
 - **Advanced Hints**: Technique-specific suggestions
-- **Themes**: Visual customization
+- **Themes**: Visual customization for Swing GUI
 - **Statistics**: Long-term player analytics
+- **Mobile**: Android/iOS versions
 
 ## License
 
