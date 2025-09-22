@@ -23,6 +23,7 @@ public class SudokuSwingGUI extends JFrame {
     private JTextArea messageArea;
     private JComboBox<Difficulty> difficultyCombo;
     private Timer gameTimer;
+    private JButton finishInputButton;
     
     public SudokuSwingGUI() {
         gameManager = new GameManager();
@@ -89,6 +90,7 @@ public class SudokuSwingGUI extends JFrame {
         controls.add(difficultyCombo);
         
         JButton newGameBtn = createButton("New Game", this::handleNewGame);
+        JButton finishInputBtn = createButton("Finish Input", this::handleFinishCustomInput);
         JButton solveBtn = createButton("Solve", this::handleSolve);
         JButton checkBtn = createButton("Check", this::handleCheck);
         JButton resetBtn = createButton("Reset", this::handleReset);
@@ -98,6 +100,7 @@ public class SudokuSwingGUI extends JFrame {
         JButton loadBtn = createButton("Load", this::handleLoad);
         
         controls.add(newGameBtn);
+        controls.add(finishInputBtn);
         controls.add(solveBtn);
         controls.add(checkBtn);
         controls.add(resetBtn);
@@ -105,6 +108,10 @@ public class SudokuSwingGUI extends JFrame {
         controls.add(undoBtn);
         controls.add(saveBtn);
         controls.add(loadBtn);
+        
+        // Store reference to finish input button for visibility control
+        this.finishInputButton = finishInputBtn;
+        finishInputBtn.setVisible(false);
         
         // Sudoku grid
         JPanel gridPanel = createSudokuGrid();
@@ -236,41 +243,38 @@ public class SudokuSwingGUI extends JFrame {
     
     // Event handlers
     private void handleNewGame() {
-        Difficulty difficulty = (Difficulty) difficultyCombo.getSelectedItem();
-        showMessage("Generating " + difficulty.name().toLowerCase() + " puzzle...");
+        String[] options = {"Traditional Game", "Custom Puzzle"};
+        int choice = JOptionPane.showOptionDialog(this,
+            "Choose game type:",
+            "New Game",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            options,
+            options[0]);
         
-        // Run puzzle generation in background thread
-        new Thread(() -> {
-            try {
-                gameManager.startNewGame(difficulty);
-                showMessage("Puzzle generated successfully!");
-                
-                // Debug: Check if board has values
-                SudokuBoard board = gameManager.getCurrentBoard();
-                if (board != null) {
-                    int filledCells = 0;
-                    for (int r = 0; r < 9; r++) {
-                        for (int c = 0; c < 9; c++) {
-                            if (board.getValue(r, c) != 0) filledCells++;
-                        }
-                    }
-                    showMessage("Board has " + filledCells + " filled cells");
-                } else {
-                    showMessage("ERROR: Board is null!");
+        if (choice == 0) {
+            // Traditional game
+            Difficulty difficulty = (Difficulty) difficultyCombo.getSelectedItem();
+            showMessage("Generating " + difficulty.name().toLowerCase() + " puzzle...");
+            
+            new Thread(() -> {
+                try {
+                    gameManager.startNewGame(difficulty);
+                    SwingUtilities.invokeLater(() -> {
+                        updateBoard();
+                        updateUI();
+                        gameTimer.start();
+                        showMessage("New " + difficulty.name().toLowerCase() + " game started!");
+                    });
+                } catch (Exception e) {
+                    showMessage("ERROR generating puzzle: " + e.getMessage());
                 }
-                
-                // Update UI on EDT
-                SwingUtilities.invokeLater(() -> {
-                    updateBoard();
-                    updateUI();
-                    gameTimer.start();
-                    showMessage("New " + difficulty.name().toLowerCase() + " game started!");
-                });
-            } catch (Exception e) {
-                showMessage("ERROR generating puzzle: " + e.getMessage());
-                e.printStackTrace();
-            }
-        }).start();
+            }).start();
+        } else if (choice == 1) {
+            // Custom puzzle
+            handleCustomPuzzleInput();
+        }
     }
     
     private void handleSolve() {
@@ -479,8 +483,12 @@ public class SudokuSwingGUI extends JFrame {
                 // Disable programmatic updates
                 filter.setProgrammaticUpdate(false);
                 
-                // Style fixed cells differently
-                if (fixed) {
+                // Style cells based on mode and state
+                if (gameManager.isCustomInputMode()) {
+                    cell.setBackground(new Color(255, 248, 225)); // Light yellow for input mode
+                    cell.setForeground(new Color(255, 87, 34)); // Orange text
+                    cell.setEditable(true);
+                } else if (fixed) {
                     cell.setBackground(new Color(240, 240, 240));
                     cell.setForeground(Color.BLACK);
                     cell.setEditable(false);
@@ -533,6 +541,52 @@ public class SudokuSwingGUI extends JFrame {
         JOptionPane.showMessageDialog(this, message, "Puzzle Completed!", 
             JOptionPane.INFORMATION_MESSAGE);
         showMessage("🎉 Puzzle completed! " + gameManager.getGameStats());
+    }
+    
+    private void handleCustomPuzzleInput() {
+        gameManager.startCustomInputMode();
+        updateBoard();
+        updateUI();
+        statusLabel.setText("Status: Enter your puzzle");
+        statusLabel.setForeground(new Color(255, 152, 0));
+        finishInputButton.setVisible(true);
+        showMessage("Custom puzzle input mode activated. Click cells to enter numbers.");
+        
+        JOptionPane.showMessageDialog(this,
+            "Enter your puzzle by clicking on cells and typing numbers.\n" +
+            "Leave cells empty for unknowns.\n" +
+            "Click 'Finish Input' when done.",
+            "Custom Puzzle Input",
+            JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    private void handleFinishCustomInput() {
+        GameManager.CustomPuzzleResult result = gameManager.finishCustomInput();
+        
+        if (result.isSuccess()) {
+            finishInputButton.setVisible(false);
+            updateBoard();
+            updateUI();
+            showMessage("Custom puzzle validated: " + result.getMessage());
+            
+            int choice = JOptionPane.showConfirmDialog(this,
+                "Solve this puzzle now?",
+                "Solve Custom Puzzle", JOptionPane.YES_NO_OPTION);
+            
+            if (choice == JOptionPane.YES_OPTION) {
+                if (gameManager.solveCustomPuzzle()) {
+                    updateBoard();
+                    updateUI();
+                    showMessage("Custom puzzle solved!");
+                    JOptionPane.showMessageDialog(this, "Puzzle solved successfully!", "Solution Found", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    showMessage("Failed to solve custom puzzle.");
+                }
+            }
+        } else {
+            showMessage("Custom puzzle error: " + result.getMessage());
+            JOptionPane.showMessageDialog(this, result.getMessage(), "Invalid Puzzle", JOptionPane.ERROR_MESSAGE);
+        }
     }
     
     // Document filter for input validation

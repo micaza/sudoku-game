@@ -51,7 +51,11 @@ public class SudokuSolver {
         return countSolutions(copy, 2) == 1;
     }
     
-    private int countSolutions(SudokuBoard board, int maxSolutions) {
+    public int countSolutions(SudokuBoard board, int maxSolutions) {
+        return countSolutionsPrivate(board, maxSolutions);
+    }
+    
+    private int countSolutionsPrivate(SudokuBoard board, int maxSolutions) {
         int[] emptyCell = findEmptyCell(board);
         if (emptyCell == null) {
             return 1; // Found one solution
@@ -65,7 +69,7 @@ public class SudokuSolver {
             if (board.isValidMove(row, col, num)) {
                 board.setValue(row, col, num);
                 
-                solutionCount += countSolutions(board, maxSolutions - solutionCount);
+                solutionCount += countSolutionsPrivate(board, maxSolutions - solutionCount);
                 
                 if (solutionCount >= maxSolutions) {
                     board.setValue(row, col, 0);

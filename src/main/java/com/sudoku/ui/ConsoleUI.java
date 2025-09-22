@@ -40,9 +40,10 @@ public class ConsoleUI {
         System.out.println("\n=== MAIN MENU ===");
         System.out.println("1. New Game");
         System.out.println("2. Continue Current Game");
-        System.out.println("3. Show Game Stats");
-        System.out.println("4. Exit");
-        System.out.print("Choose an option (1-4): ");
+        System.out.println("3. Solve Custom Puzzle");
+        System.out.println("4. Show Game Stats");
+        System.out.println("5. Exit");
+        System.out.print("Choose an option (1-5): ");
     }
     
     private void handleMainMenuChoice() {
@@ -61,9 +62,12 @@ public class ConsoleUI {
                     }
                     break;
                 case 3:
-                    showGameStats();
+                    handleCustomPuzzle();
                     break;
                 case 4:
+                    showGameStats();
+                    break;
+                case 5:
                     running = false;
                     System.out.println("Thanks for playing Sudoku!");
                     break;
@@ -369,5 +373,63 @@ public class ConsoleUI {
             System.out.println("Invalid input.");
         }
         return false;
+    }
+    
+    private void handleCustomPuzzle() {
+        System.out.println("\n=== CUSTOM PUZZLE SOLVER ===");
+        System.out.println("Enter your puzzle (use 0 for empty cells):");
+        System.out.println("Format: Enter 9 rows, each with 9 numbers separated by spaces");
+        System.out.println("Example: 5 3 0 0 7 0 0 0 0");
+        System.out.println();
+        
+        int[][] inputGrid = new int[9][9];
+        
+        for (int row = 0; row < 9; row++) {
+            System.out.print("Row " + (row + 1) + ": ");
+            try {
+                String[] values = scanner.nextLine().trim().split("\\s+");
+                if (values.length != 9) {
+                    System.out.println("Error: Please enter exactly 9 numbers per row.");
+                    return;
+                }
+                
+                for (int col = 0; col < 9; col++) {
+                    int value = Integer.parseInt(values[col]);
+                    if (value < 0 || value > 9) {
+                        System.out.println("Error: Numbers must be between 0-9.");
+                        return;
+                    }
+                    inputGrid[row][col] = value;
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Error: Invalid input. Please enter numbers only.");
+                return;
+            }
+        }
+        
+        System.out.println("\nValidating puzzle...");
+        GameManager.CustomPuzzleResult result = gameManager.startCustomPuzzle(inputGrid);
+        
+        if (!result.isSuccess()) {
+            System.out.println("Error: " + result.getMessage());
+            return;
+        }
+        
+        System.out.println(result.getMessage());
+        System.out.println("\nYour input puzzle:");
+        printBoard();
+        
+        System.out.print("\nSolve this puzzle? (y/n): ");
+        String confirm = scanner.nextLine().trim().toLowerCase();
+        
+        if (confirm.equals("y") || confirm.equals("yes")) {
+            if (gameManager.solveCustomPuzzle()) {
+                System.out.println("\nPuzzle solved!");
+                printBoard();
+                System.out.println("\n✓ Solution found! Original numbers are shown in the solved grid.");
+            } else {
+                System.out.println("\nUnable to solve the puzzle.");
+            }
+        }
     }
 }
